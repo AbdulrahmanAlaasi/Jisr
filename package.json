@@ -1,0 +1,92 @@
+{
+  "name": "orbitsend",
+  "version": "0.2.0",
+  "description": "Private, encrypted file and clipboard sharing between your computers.",
+  "homepage": "https://github.com/AbdulrahmanAlaasi/OrbitSend",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbdulrahmanAlaasi/OrbitSend.git"
+  },
+  "main": "src/main/index.js",
+  "author": "OrbitSend",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/main/index.js && node --check src/main/crypto.js && node --check src/main/discovery.js && node --check src/main/transfer-service.js && node --check src/renderer/app.js",
+    "build": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "electron": "43.3.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "app.orbitsend.desktop",
+    "productName": "OrbitSend",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "icon": "build/icon.png",
+    "files": [
+      "src/**/*",
+      "package.json",
+      "node_modules/qrcode/**/*",
+      "node_modules/dijkstrajs/**/*",
+      "node_modules/pngjs/**/*",
+      "node_modules/yargs/**/*",
+      "node_modules/yargs-parser/**/*",
+      "node_modules/cliui/**/*",
+      "node_modules/strip-ansi/**/*",
+      "node_modules/ansi-regex/**/*",
+      "node_modules/wrap-ansi/**/*",
+      "node_modules/string-width/**/*",
+      "node_modules/emoji-regex/**/*",
+      "node_modules/is-fullwidth-code-point/**/*",
+      "node_modules/decamelize/**/*",
+      "node_modules/get-caller-file/**/*",
+      "node_modules/require-directory/**/*"
+    ],
+    "protocols": [
+      {
+        "name": "OrbitSend link",
+        "schemes": ["orbitsend"]
+      }
+    ],
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.utilities",
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "OrbitSend uses your local network to discover your computers and transfer files directly between them.",
+        "NSBonjourServices": ["_orbitsend._tcp"]
+      }
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64", "arm64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

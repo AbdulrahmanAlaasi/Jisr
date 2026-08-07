@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>OrbitSend</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-orbit"></span>
+            <span class="brand-core"></span>
+          </div>
+          <div>
+            <strong>OrbitSend</strong>
+            <span>Private by design</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Main navigation">
+          <button class="nav-item active" data-view="home">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+            Send
+          </button>
+          <button class="nav-item" data-view="history">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2m6-2a9 9 0 1 1-2.64-6.36M21 4v5h-5"/></svg>
+            History
+            <span class="nav-badge" id="history-badge" hidden></span>
+          </button>
+          <button class="nav-item" data-view="settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.96 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.96a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.96 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.04 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg>
+            Settings
+          </button>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="privacy-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            End-to-end encrypted
+          </div>
+          <div class="local-device" id="local-device"></div>
+        </div>
+      </aside>
+
+      <main class="main" id="main-view" tabindex="-1"></main>
+    </div>
+
+    <div id="modal-root"></div>
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+    <div class="drop-overlay" id="drop-overlay" hidden>
+      <div class="drop-overlay-card">
+        <div class="drop-icon">↓</div>
+        <strong>Drop to send instantly</strong>
+        <span id="drop-device-label">Choose a device first</span>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
