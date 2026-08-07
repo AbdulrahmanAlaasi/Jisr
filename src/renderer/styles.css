@@ -44,12 +44,9 @@ body.platform-darwin .sidebar { padding-top: 50px; }
 .brand strong { font-size: 17px; line-height: 1; letter-spacing: -.035em; }
 .brand span { font-size: 11px; color: var(--muted); }
 .brand-mark {
-  position: relative; width: 39px; height: 39px; flex: 0 0 auto; border-radius: 13px;
-  background: linear-gradient(145deg, #8b7cf8, #5750dc); box-shadow: 0 9px 24px rgba(87,80,220,.25);
+  display: block; width: 39px; height: 39px; flex: 0 0 auto; border-radius: 11px;
+  box-shadow: 0 9px 24px rgba(87,80,220,.25);
 }
-.brand-orbit { position: absolute; inset: 8px; border: 2.5px solid white; border-radius: 50%; }
-.brand-core { position: absolute; width: 7px; height: 7px; left: 16px; top: 16px; border-radius: 50%; background: white; }
-.brand-mark::after { content: ""; position: absolute; width: 8px; height: 2.5px; right: 4px; top: 7px; border-radius: 3px; background: white; transform: rotate(-45deg); }
 
 .nav { display: flex; flex-direction: column; gap: 6px; }
 .nav-item {

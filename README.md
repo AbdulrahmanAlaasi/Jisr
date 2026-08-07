@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="build/icon.png" alt="Jisr bridge logo" width="112">
+</p>
+
 # Jisr · جسر
 
 Jisr is a private, cross-platform desktop app for sending files, folders,

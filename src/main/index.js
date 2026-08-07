@@ -37,15 +37,8 @@ let updateService = null;
 let lastNotifiedUpdate = null;
 let migrationState = { migrated: false };
 
-const iconSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs>
-  <rect width="64" height="64" rx="18" fill="url(#g)"/>
-  <path d="M13 39h38M17 39c2-14 9-21 15-21s13 7 15 21" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="32" cy="49" r="3.5" fill="white"/>
-</svg>`;
-const appIcon = nativeImage.createFromDataURL(
-  `data:image/svg+xml;base64,${Buffer.from(iconSvg).toString('base64')}`,
+const appIcon = nativeImage.createFromPath(
+  path.join(__dirname, '../renderer/assets/jisr-icon.png'),
 );
 
 app.setName(APP_NAME);
