@@ -1,5 +1,6 @@
 'use strict';
 
+const { spawn } = require('node:child_process');
 const path = require('node:path');
 const os = require('node:os');
 const {
@@ -393,24 +394,47 @@ function registerIpc() {
     return result;
   });
   handle('updates:download', async () => {
-    const update = updateService.publicState();
-    if (update.status !== 'available' || !update.downloadUrl) {
-      throw new Error('No update is currently available.');
+    const directory = path.join(
+      process.platform === 'darwin' ? app.getPath('downloads') : app.getPath('temp'),
+      'Jisr Updates',
+    );
+    return updateService.download(directory);
+  });
+  handle('updates:install', async () => {
+    const installerPath = updateService.installerPath();
+    if (!installerPath) throw new Error('The update has not finished downloading.');
+
+    if (process.platform === 'darwin') {
+      const error = await shell.openPath(installerPath);
+      if (error) {
+        updateService.setState({ error });
+        throw new Error(error);
+      }
+      return { action: 'opened' };
     }
-    const url = new URL(update.downloadUrl);
-    const expectedPrefixes = [
-      '/AbdulrahmanAlaasi/OrbitSend-Updates/releases/',
-      '/AbdulrahmanAlaasi/Jisr-Updates/releases/',
-      '/AbdulrahmanAlaasi/Jisr/releases/',
-    ];
-    if (
-      url.protocol !== 'https:' ||
-      url.hostname !== 'github.com' ||
-      !expectedPrefixes.some((prefix) => url.pathname.startsWith(prefix))
-    ) {
-      throw new Error('The update download address could not be verified.');
+    if (process.platform !== 'win32') throw new Error('Automatic installation is not supported on this computer.');
+
+    updateService.markInstalling();
+    try {
+      await new Promise((resolve, reject) => {
+        const installer = spawn(installerPath, ['--updated', '/S', '--force-run'], {
+          detached: true,
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+        installer.once('spawn', () => {
+          installer.unref();
+          resolve();
+        });
+        installer.once('error', reject);
+      });
+    } catch (error) {
+      updateService.setState({ status: 'downloaded', error: error.message });
+      throw error;
     }
-    await shell.openExternal(url.toString());
+    quitting = true;
+    setTimeout(() => app.quit(), 250);
+    return { action: 'restarting' };
   });
   handle('settings:update', async (changes) => {
     const previousName = store.settings.deviceName;

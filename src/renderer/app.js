@@ -61,6 +61,12 @@ function formatBytes(bytes) {
   return `${amount >= 10 || index === 0 ? amount.toFixed(0) : amount.toFixed(1)} ${units[index]}`;
 }
 
+function updateProgressLabel(update) {
+  const percent = Math.max(0, Math.min(100, Number(update?.downloadPercent || 0)));
+  if (percent > 0) return `${Math.round(percent)}%`;
+  return update?.downloadBytes ? formatBytes(update.downloadBytes) : 'Starting…';
+}
+
 function hasDraggedFiles(dataTransfer) {
   return Array.from(dataTransfer?.types || []).includes('Files');
 }
@@ -113,10 +119,18 @@ function updateChrome() {
   const updateSlot = document.getElementById('update-slot');
   const update = ui.state?.updates;
   if (updateSlot) {
-    updateSlot.innerHTML = update?.status === 'available' ? `
+    const visibleStatuses = ['available', 'downloading', 'downloaded', 'installing'];
+    const updateLabels = {
+      available: ['Update available', `Version ${escapeHtml(update?.latestVersion)}`],
+      downloading: ['Downloading update', updateProgressLabel(update)],
+      downloaded: ['Ready to install', `Version ${escapeHtml(update?.latestVersion)}`],
+      installing: ['Installing update', 'Jisr will reopen'],
+    };
+    const label = updateLabels[update?.status];
+    updateSlot.innerHTML = visibleStatuses.includes(update?.status) ? `
       <button class="update-alert" data-action="update-open">
         <span class="update-alert-icon">↻</span>
-        <span><strong>Update available</strong><small>Version ${escapeHtml(update.latestVersion)}</small></span>
+        <span><strong>${label[0]}</strong><small>${label[1]}</small></span>
       </button>` : '';
   }
   if (ui.state) {
@@ -333,6 +347,23 @@ function renderHistoryItem(entry) {
 
 function renderSettings() {
   const { settings, identity, updates } = ui.state;
+  const activeUpdate = ['available', 'downloading', 'downloaded', 'installing'].includes(updates.status);
+  const updateCopy = updates.status === 'available'
+    ? `Version ${escapeHtml(updates.latestVersion)} is available.`
+    : updates.status === 'downloading'
+      ? `Downloading version ${escapeHtml(updates.latestVersion)} · ${updateProgressLabel(updates)}`
+      : updates.status === 'downloaded'
+        ? `Version ${escapeHtml(updates.latestVersion)} is ready to install.`
+        : updates.status === 'installing'
+          ? 'Installing the update…'
+          : updates.status === 'checking'
+            ? 'Checking for updates…'
+            : updates.error
+              ? escapeHtml(updates.error)
+              : 'You can check at any time.';
+  const updateButton = activeUpdate
+    ? (updates.status === 'downloading' ? `Downloading ${updateProgressLabel(updates)}` : updates.status === 'downloaded' ? 'Install update' : updates.status === 'installing' ? 'Installing…' : 'View update')
+    : updates.status === 'checking' ? 'Checking…' : 'Check now';
   mainView.innerHTML = `
     <div class="content">
       <header class="page-head"><div><h1>Settings</h1><p>Control how this computer appears and receives things.</p></div></header>
@@ -355,7 +386,7 @@ function renderSettings() {
         <section class="settings-card">
           <div class="settings-card-head"><h2>Updates</h2><p>Check the public installer channel without exposing the private source repository.</p></div>
           <div class="setting-row"><div class="setting-copy"><strong>Automatically check for updates</strong><span>Checks when Jisr opens and every six hours.</span></div>${renderSwitch('checkForUpdates', settings.checkForUpdates)}</div>
-          <div class="setting-row"><div class="setting-copy"><strong>Jisr ${escapeHtml(updates.currentVersion)}</strong><span>${updates.status === 'available' ? `Version ${escapeHtml(updates.latestVersion)} is available.` : updates.status === 'checking' ? 'Checking for updates…' : updates.error ? escapeHtml(updates.error) : 'You can check at any time.'}</span></div><button class="button small ${updates.status === 'available' ? 'primary' : ''}" data-action="${updates.status === 'available' ? 'update-open' : 'update-check'}" ${updates.status === 'checking' ? 'disabled' : ''}>${updates.status === 'available' ? 'View update' : updates.status === 'checking' ? 'Checking…' : 'Check now'}</button></div>
+          <div class="setting-row"><div class="setting-copy"><strong>Jisr ${escapeHtml(updates.currentVersion)}</strong><span>${updateCopy}</span></div><button class="button small ${activeUpdate ? 'primary' : ''}" data-action="${activeUpdate ? 'update-open' : 'update-check'}" ${updates.status === 'checking' || updates.status === 'installing' ? 'disabled' : ''}>${updateButton}</button></div>
         </section>
 
         <section class="settings-card">
@@ -473,16 +504,38 @@ function showIncomingModal(transfer) {
 
 function showUpdateModal() {
   const update = ui.state?.updates;
-  if (!update || update.status !== 'available') return;
+  if (!update || !['available', 'downloading', 'downloaded', 'installing'].includes(update.status)) return;
+  const isMac = ui.state?.identity?.platform === 'darwin';
   const notes = update.releaseNotes.trim() || 'This update contains improvements and fixes.';
+  const downloading = update.status === 'downloading';
+  const downloaded = update.status === 'downloaded';
+  const installing = update.status === 'installing';
+  const heroTitle = downloading ? 'Downloading securely' : downloaded ? 'Ready to install' : installing ? 'Installing update' : 'Ready to update';
+  const heroDetail = downloading
+    ? `${updateProgressLabel(update)} · ${formatBytes(update.downloadBytes)} received`
+    : downloaded
+      ? (isMac ? 'The Mac installer is ready to open.' : 'Restart Jisr to finish the update.')
+      : installing
+        ? (isMac ? 'Opening the Mac installer…' : 'Jisr will reopen automatically.')
+        : escapeHtml(update.assetName || 'Installer available');
+  const actionButton = downloading
+    ? `<button class="button primary" disabled>Downloading ${updateProgressLabel(update)}</button>`
+    : downloaded
+      ? `<button class="button primary" data-action="update-install">${isMac ? 'Open installer' : 'Restart and install'}</button>`
+      : installing
+        ? '<button class="button primary" disabled>Installing…</button>'
+        : '<button class="button primary" data-action="update-download">Download update</button>';
   openModal(`
+    <div class="modal-card" data-modal="update">
     <div class="modal-head"><div><span class="eyebrow">New version</span><h2>Jisr ${escapeHtml(update.latestVersion)}</h2><p>You’re currently using version ${escapeHtml(update.currentVersion)}.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
     <div class="modal-body">
-      <div class="update-hero"><div class="update-hero-icon">↻</div><div><strong>Ready to update</strong><span>${escapeHtml(update.assetName || 'Installer available')}</span></div></div>
+      <div class="update-hero"><div class="update-hero-icon">↻</div><div><strong data-update-title>${heroTitle}</strong><span data-update-detail>${heroDetail}</span></div></div>
+      ${downloading || downloaded ? `<div class="update-progress" aria-label="Update download progress"><span data-update-progress style="width:${Math.max(0, Math.min(100, Number(update.downloadPercent || 0)))}%"></span></div>` : ''}
       <div class="update-notes">${escapeHtml(notes).replaceAll('\n', '<br>')}</div>
-      <div class="security-note">${icons.shield}<span>The installer is downloaded from the public Jisr update channel. Your pairing and settings remain on this computer.</span></div>
+      <div class="security-note">${icons.shield}<span>Jisr verifies the installer before opening it. Your pairing, settings, and transfer history remain on this computer.</span></div>
     </div>
-    <div class="modal-foot"><button class="button ghost" data-action="modal-close">Later</button><button class="button primary" data-action="update-download">Download update</button></div>
+    <div class="modal-foot"><button class="button ghost" data-action="modal-close">Later</button>${actionButton}</div>
+    </div>
   `);
 }
 
@@ -613,10 +666,19 @@ async function action(button) {
   }
   if (name === 'update-download') {
     button.disabled = true;
-    button.textContent = 'Opening download…';
+    button.textContent = 'Starting download…';
     await window.jisr.downloadUpdate();
-    closeModal();
-    showToast({ tone: 'success', title: 'Download opened', message: 'Install the new version over Jisr when the download finishes.' });
+    showUpdateModal();
+    return;
+  }
+  if (name === 'update-install') {
+    button.disabled = true;
+    button.textContent = ui.state.identity.platform === 'darwin' ? 'Opening installer…' : 'Restarting…';
+    const result = await window.jisr.installUpdate();
+    if (result.action === 'opened') {
+      closeModal();
+      showToast({ tone: 'success', title: 'Installer opened', message: 'Drag Jisr into Applications to replace the current version.' });
+    }
     return;
   }
   if (name === 'choose-download') {
@@ -716,8 +778,22 @@ window.addEventListener('drop', async (event) => {
 });
 
 window.jisr.onState((state) => {
+  const updateModalOpen = Boolean(modalRoot.querySelector('[data-modal="update"]'));
+  const previousUpdateStatus = ui.state?.updates?.status;
   ui.state = state;
+  if (updateModalOpen && previousUpdateStatus === 'downloading' && state.updates?.status === 'downloading') {
+    updateChrome();
+    const progress = Math.max(0, Math.min(100, Number(state.updates.downloadPercent || 0)));
+    const bar = modalRoot.querySelector('[data-update-progress]');
+    const detail = modalRoot.querySelector('[data-update-detail]');
+    const button = modalRoot.querySelector('.modal-foot .button.primary');
+    if (bar) bar.style.width = `${progress}%`;
+    if (detail) detail.textContent = `${updateProgressLabel(state.updates)} · ${formatBytes(state.updates.downloadBytes)} received`;
+    if (button) button.textContent = `Downloading ${updateProgressLabel(state.updates)}`;
+    return;
+  }
   render();
+  if (updateModalOpen && ['available', 'downloading', 'downloaded', 'installing'].includes(state.updates?.status)) showUpdateModal();
   showMigrationNotice(state);
 });
 window.jisr.onToast(showToast);

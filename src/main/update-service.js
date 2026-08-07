@@ -1,6 +1,9 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { EventEmitter } = require('node:events');
+const fs = require('node:fs/promises');
+const path = require('node:path');
 
 const UPDATE_OWNER = 'AbdulrahmanAlaasi';
 // Keep the legacy repository until all installed OrbitSend builds have moved to Jisr.
@@ -40,6 +43,27 @@ function selectReleaseAsset(assets, platform, arch) {
   return null;
 }
 
+function parseAssetDigest(value) {
+  const match = String(value || '').trim().match(/^sha256:([a-f0-9]{64})$/i);
+  return match ? match[1].toLowerCase() : null;
+}
+
+function isTrustedUpdateUrl(value) {
+  try {
+    const url = new URL(value);
+    const expectedPrefixes = [
+      '/AbdulrahmanAlaasi/OrbitSend-Updates/releases/',
+      '/AbdulrahmanAlaasi/Jisr-Updates/releases/',
+      '/AbdulrahmanAlaasi/Jisr/releases/',
+    ];
+    return url.protocol === 'https:' &&
+      url.hostname === 'github.com' &&
+      expectedPrefixes.some((prefix) => url.pathname.startsWith(prefix));
+  } catch {
+    return false;
+  }
+}
+
 class UpdateService extends EventEmitter {
   constructor(options) {
     super();
@@ -49,6 +73,8 @@ class UpdateService extends EventEmitter {
     this.isEnabled = options.isEnabled || (() => true);
     this.fetcher = options.fetcher || fetch;
     this.checkPromise = null;
+    this.downloadPromise = null;
+    this.downloadedPath = null;
     this.state = {
       status: 'idle',
       currentVersion: this.currentVersion,
@@ -58,6 +84,10 @@ class UpdateService extends EventEmitter {
       releaseUrl: RELEASES_URL,
       downloadUrl: null,
       assetName: null,
+      assetDigest: null,
+      assetSize: 0,
+      downloadBytes: 0,
+      downloadPercent: 0,
       checkedAt: null,
       error: null,
     };
@@ -78,6 +108,9 @@ class UpdateService extends EventEmitter {
       return this.setState({ status: 'disabled', error: null });
     }
     if (this.checkPromise) return this.checkPromise;
+    if (['downloading', 'downloaded', 'installing'].includes(this.state.status)) {
+      return this.publicState();
+    }
     this.checkPromise = this.performCheck(options).finally(() => { this.checkPromise = null; });
     return this.checkPromise;
   }
@@ -115,6 +148,10 @@ class UpdateService extends EventEmitter {
         releaseUrl: release.html_url || RELEASES_URL,
         downloadUrl: asset?.browser_download_url || release.html_url || RELEASES_URL,
         assetName: asset?.name || null,
+        assetDigest: parseAssetDigest(asset?.digest),
+        assetSize: Number(asset?.size || 0),
+        downloadBytes: 0,
+        downloadPercent: 0,
         checkedAt: new Date().toISOString(),
         error: null,
       });
@@ -129,6 +166,110 @@ class UpdateService extends EventEmitter {
       });
     }
   }
+
+  async download(destinationDirectory) {
+    if (this.downloadPromise) return this.downloadPromise;
+    if (this.state.status === 'downloaded' && this.downloadedPath) return this.publicState();
+    if (this.state.status !== 'available' || !this.state.downloadUrl || !this.state.assetName) {
+      throw new Error('No update is currently available.');
+    }
+    if (!isTrustedUpdateUrl(this.state.downloadUrl)) {
+      throw new Error('The update download address could not be verified.');
+    }
+    if (!this.state.assetDigest) {
+      throw new Error('This update is missing its security checksum.');
+    }
+
+    this.downloadPromise = this.performDownload(destinationDirectory)
+      .finally(() => { this.downloadPromise = null; });
+    return this.downloadPromise;
+  }
+
+  async performDownload(destinationDirectory) {
+    const assetName = path.basename(this.state.assetName);
+    const allowedExtension = this.platform === 'darwin' ? /\.dmg$/i : /\.exe$/i;
+    if (assetName !== this.state.assetName || !allowedExtension.test(assetName)) {
+      throw new Error('The update installer type is not supported.');
+    }
+
+    const directory = path.resolve(destinationDirectory);
+    const finalPath = path.join(directory, assetName);
+    const partialPath = `${finalPath}.part`;
+    await fs.mkdir(directory, { recursive: true });
+    await fs.rm(partialPath, { force: true });
+    this.setState({ status: 'downloading', downloadBytes: 0, downloadPercent: 0, error: null });
+
+    let file = null;
+    try {
+      const response = await this.fetcher(this.state.downloadUrl, {
+        headers: {
+          accept: 'application/octet-stream',
+          'user-agent': `Jisr/${this.currentVersion}`,
+        },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(20 * 60 * 1000),
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`The update download returned ${response.status}.`);
+      }
+
+      const expectedSize = this.state.assetSize || Number(response.headers?.get?.('content-length') || 0);
+      const digest = crypto.createHash('sha256');
+      const reader = response.body.getReader();
+      let downloaded = 0;
+      let lastProgressAt = 0;
+      file = await fs.open(partialPath, 'w');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = Buffer.from(value);
+        await file.write(chunk);
+        digest.update(chunk);
+        downloaded += chunk.length;
+        const now = Date.now();
+        if (now - lastProgressAt >= 150) {
+          const percent = expectedSize ? Math.min(99, (downloaded / expectedSize) * 100) : 0;
+          this.setState({ downloadBytes: downloaded, downloadPercent: percent });
+          lastProgressAt = now;
+        }
+      }
+
+      await file.sync();
+      await file.close();
+      file = null;
+      if (this.state.assetSize && downloaded !== this.state.assetSize) {
+        throw new Error('The downloaded update is incomplete.');
+      }
+      if (digest.digest('hex') !== this.state.assetDigest) {
+        throw new Error('The downloaded update did not pass its security check.');
+      }
+
+      await fs.rm(finalPath, { force: true });
+      await fs.rename(partialPath, finalPath);
+      this.downloadedPath = finalPath;
+      return this.setState({
+        status: 'downloaded',
+        downloadBytes: downloaded,
+        downloadPercent: 100,
+        error: null,
+      });
+    } catch (error) {
+      await file?.close().catch(() => {});
+      await fs.rm(partialPath, { force: true });
+      this.setState({ status: 'available', downloadBytes: 0, downloadPercent: 0, error: error.message });
+      throw error;
+    }
+  }
+
+  installerPath() {
+    return this.state.status === 'downloaded' ? this.downloadedPath : null;
+  }
+
+  markInstalling() {
+    if (!this.installerPath()) throw new Error('The update has not finished downloading.');
+    return this.setState({ status: 'installing', error: null });
+  }
 }
 
 module.exports = {
@@ -136,6 +277,8 @@ module.exports = {
   RELEASES_URL,
   UpdateService,
   compareVersions,
+  isTrustedUpdateUrl,
+  parseAssetDigest,
   parseVersion,
   selectReleaseAsset,
 };

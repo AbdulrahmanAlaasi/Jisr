@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('jisr', {
   clearHistory: () => ipcRenderer.invoke('history:clear'),
   checkForUpdates: () => ipcRenderer.invoke('updates:check'),
   downloadUpdate: () => ipcRenderer.invoke('updates:download'),
+  installUpdate: () => ipcRenderer.invoke('updates:install'),
   updateSettings: (changes) => ipcRenderer.invoke('settings:update', changes),
   readClipboard: () => ipcRenderer.invoke('clipboard:read'),
   writeClipboard: (value) => ipcRenderer.invoke('clipboard:write', value),

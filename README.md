@@ -24,7 +24,7 @@ Website: [jisr.alaasi.dev](https://jisr.alaasi.dev)
 - Safe, non-overwriting destination names and path-traversal protection
 - Background tray mode, native notifications, and launch-at-login support
 - Manual IP connection for networks that block multicast discovery
-- In-app update-available indicator with platform-specific installer download
+- Verified in-app update downloads with progress and platform-specific installation
 
 ## Install on both computers
 
@@ -74,7 +74,7 @@ Windows cannot create the final macOS package, so GitHub builds it on a Mac
 runner for you:
 
 1. Finish the changes, increase the version, and push them to the `main` branch.
-2. Create and push a matching version tag, such as `v0.4.1`. The **Build and
+2. Create and push a matching version tag, such as `v0.4.2`. The **Build and
    release Jisr** GitHub Action starts automatically.
 3. Wait for both build jobs and the release job to finish on the repository's
    **Actions** page.
@@ -101,8 +101,13 @@ build finishes. The exact maintainer commands are in
 Jisr temporarily checks the legacy public installer-only
 [`OrbitSend-Updates`](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates)
 channel at launch and every six hours. When a newer semantic version is
-published, an update card appears in the sidebar. It opens a release dialog and
-downloads the correct DMG or Windows installer when selected.
+published, an update card appears in the sidebar. Jisr downloads the correct
+installer inside the app, displays progress, and verifies its SHA-256 digest
+before it can be opened.
+
+On Windows, **Restart and install** closes Jisr, installs the verified update,
+and reopens the app. On macOS, **Open installer** opens the downloaded DMG so
+the user can approve replacing Jisr in Applications.
 
 The legacy repository name is retained so OrbitSend 0.3.x installations can
 discover the Jisr transition release. It can be renamed only after that
