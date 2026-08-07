@@ -13,6 +13,7 @@ const {
   timingSafeEqual,
 } = require('node:crypto');
 
+// Retained for wire compatibility with paired OrbitSend 0.3.x devices.
 const PROTOCOL_INFO = Buffer.from('OrbitSend secure channel v1', 'utf8');
 
 function createIdentityKeyMaterial() {

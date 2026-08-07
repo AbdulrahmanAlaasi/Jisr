@@ -53,6 +53,7 @@ class DeviceDiscovery extends EventEmitter {
     const identity = this.getIdentity();
     if (!identity?.port) return;
     const packet = Buffer.from(
+      // The legacy beacon name keeps Jisr discoverable by OrbitSend 0.3.x during migration.
       JSON.stringify({ type: 'ORBIT_HELLO', ...identity }),
       'utf8',
     );
@@ -124,10 +125,10 @@ class DeviceDiscovery extends EventEmitter {
     const url = new URL(`http://${cleanHost}${port ? `:${port}` : ''}/api/v1/hello`);
     if (!url.port) url.port = '53318';
     const response = await fetch(url, { signal: AbortSignal.timeout(4_000) });
-    if (!response.ok) throw new Error('No OrbitSend device answered at that address.');
+    if (!response.ok) throw new Error('No Jisr device answered at that address.');
     const device = await response.json();
     if (device.protocol !== 1 || !device.id || !device.publicKey) {
-      throw new Error('That address is not an OrbitSend device.');
+      throw new Error('That address is not a Jisr device.');
     }
     const normalized = {
       ...device,

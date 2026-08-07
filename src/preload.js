@@ -8,7 +8,7 @@ function listener(channel, callback) {
   return () => ipcRenderer.removeListener(channel, wrapped);
 }
 
-contextBridge.exposeInMainWorld('orbit', {
+contextBridge.exposeInMainWorld('jisr', {
   getState: () => ipcRenderer.invoke('state:get'),
   pickFiles: () => ipcRenderer.invoke('dialog:files'),
   pickFolder: () => ipcRenderer.invoke('dialog:folder'),

@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { OrbitStore } = require('../src/main/store');
+const { JisrStore } = require('../src/main/store');
 const { TransferService, cleanRelativePath } = require('../src/main/transfer-service');
 
 class MemoryDiscovery {
@@ -26,7 +26,7 @@ async function waitFor(check, timeout = 8_000) {
 async function createDevice(root, name) {
   const dataPath = path.join(root, `${name}-data`);
   const downloadsPath = path.join(root, `${name}-downloads`);
-  const store = await new OrbitStore(dataPath, null, downloadsPath).init();
+  const store = await new JisrStore(dataPath, null, downloadsPath).init();
   await store.updateSettings({ deviceName: name, showNotifications: false });
   const discovery = new MemoryDiscovery();
   const service = new TransferService(store, discovery);
@@ -51,7 +51,7 @@ test('path sanitization blocks traversal and reserved characters', () => {
 });
 
 test('two devices pair, exchange text, and transfer a verified file', async (t) => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'orbitsend-test-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'jisr-test-'));
   const alice = await createDevice(root, 'Windows PC');
   const bob = await createDevice(root, 'MacBook Pro');
   t.after(async () => {

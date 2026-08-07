@@ -1,9 +1,9 @@
-# OrbitSend
+# Jisr · جسر
 
-OrbitSend is a private, cross-platform desktop app for sending files, folders,
+Jisr is a private, cross-platform desktop app for sending files, folders,
 videos, links, and text directly between your own computers. It is designed as
-an AirDrop-like bridge between Windows and macOS without accounts, cloud
-storage, or upload limits.
+a direct bridge between Windows and macOS without accounts, cloud storage, or
+upload limits.
 
 ## What it includes
 
@@ -25,7 +25,7 @@ storage, or upload limits.
 Download and install the Windows `.exe` on the PC and the macOS `.dmg` on the
 Mac. Keep both devices on the same Wi-Fi or wired local network.
 
-1. Open OrbitSend on both computers.
+1. Open Jisr on both computers.
 2. On one computer, choose **Pair a device**.
 3. Select that computer on the other device and enter the displayed code.
 4. Select the paired device and drop files into the Send panel.
@@ -62,11 +62,15 @@ pushed.
 
 ## Updates
 
-OrbitSend checks the public installer-only
+Jisr temporarily checks the legacy public installer-only
 [`OrbitSend-Updates`](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates)
 channel at launch and every six hours. When a newer semantic version is
 published, an update card appears in the sidebar. It opens a release dialog and
 downloads the correct DMG or Windows installer when selected.
+
+The legacy repository name is retained so OrbitSend 0.3.x installations can
+discover the Jisr transition release. New public releases will move to the Jisr
+repository only after that compatibility window is complete.
 
 The current development builds are not Apple-notarized, so the update is
 downloaded for user-approved installation instead of silently replacing the
@@ -75,14 +79,14 @@ consistent Apple Developer ID signing and notarization are configured.
 
 ## Network and security notes
 
-OrbitSend broadcasts a small discovery beacon only on the local subnet. File
+Jisr broadcasts a small discovery beacon only on the local subnet. File
 names, content, and transfer commands are sent through an authenticated
 encrypted channel. The pairing code is mixed into the initial X25519 key
 exchange, so it is not transmitted over the network. Long-term private key
 material is protected by DPAPI on Windows and Keychain on macOS when available.
 
 The default transfer port is TCP `53318`. Discovery uses UDP multicast and
-broadcast on port `43891`. If a firewall asks for permission, allow OrbitSend on
+broadcast on port `43891`. If a firewall asks for permission, allow Jisr on
 private networks only.
 
 ## License

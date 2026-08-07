@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS = {
   checkForUpdates: true,
 };
 
-class OrbitStore {
+class JisrStore {
   constructor(userDataPath, safeStorage, downloadsPath) {
     this.directory = userDataPath;
     this.safeStorage = safeStorage;
@@ -34,7 +34,7 @@ class OrbitStore {
     await fs.mkdir(this.directory, { recursive: true });
     this.settings = {
       ...DEFAULT_SETTINGS,
-      downloadPath: path.join(this.downloadsPath, 'OrbitSend'),
+      downloadPath: path.join(this.downloadsPath, 'Jisr'),
       ...(await this.readJson('settings.json', {})),
     };
     this.peers = await this.readJson('peers.json', []);
@@ -207,4 +207,4 @@ class OrbitStore {
   }
 }
 
-module.exports = { OrbitStore };
+module.exports = { JisrStore };

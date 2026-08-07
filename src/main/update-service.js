@@ -3,6 +3,7 @@
 const { EventEmitter } = require('node:events');
 
 const UPDATE_OWNER = 'AbdulrahmanAlaasi';
+// Keep the legacy repository until all installed OrbitSend builds have moved to Jisr.
 const UPDATE_REPOSITORY = 'OrbitSend-Updates';
 const RELEASES_URL = `https://github.com/${UPDATE_OWNER}/${UPDATE_REPOSITORY}/releases`;
 const LATEST_RELEASE_API = `https://api.github.com/repos/${UPDATE_OWNER}/${UPDATE_REPOSITORY}/releases/latest`;
@@ -87,7 +88,7 @@ class UpdateService extends EventEmitter {
       const response = await this.fetcher(LATEST_RELEASE_API, {
         headers: {
           accept: 'application/vnd.github+json',
-          'user-agent': `OrbitSend/${this.currentVersion}`,
+          'user-agent': `Jisr/${this.currentVersion}`,
           'x-github-api-version': '2022-11-28',
         },
         signal: AbortSignal.timeout(10_000),
@@ -109,7 +110,7 @@ class UpdateService extends EventEmitter {
       return this.setState({
         status: available ? 'available' : 'current',
         latestVersion,
-        releaseName: String(release.name || `OrbitSend ${latestVersion}`).slice(0, 160),
+        releaseName: String(release.name || `Jisr ${latestVersion}`).slice(0, 160),
         releaseNotes: String(release.body || '').slice(0, 8_000),
         releaseUrl: release.html_url || RELEASES_URL,
         downloadUrl: asset?.browser_download_url || release.html_url || RELEASES_URL,

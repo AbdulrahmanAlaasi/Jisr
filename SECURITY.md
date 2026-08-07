@@ -1,6 +1,6 @@
 # Security policy
 
-OrbitSend is designed for trusted devices on a private local network. Pairing
+Jisr is designed for trusted devices on a private local network. Pairing
 requires a short-lived code displayed out of band, and all post-pairing content
 is encrypted and authenticated.
 
