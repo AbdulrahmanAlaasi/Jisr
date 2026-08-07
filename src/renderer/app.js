@@ -60,6 +60,16 @@ function formatBytes(bytes) {
   return `${amount >= 10 || index === 0 ? amount.toFixed(0) : amount.toFixed(1)} ${units[index]}`;
 }
 
+function hasDraggedFiles(dataTransfer) {
+  return Array.from(dataTransfer?.types || []).includes('Files');
+}
+
+function pathsFromDrop(dataTransfer) {
+  return Array.from(dataTransfer?.files || [])
+    .map((file) => window.orbit.pathFromFile(file))
+    .filter(Boolean);
+}
+
 function timeAgo(value) {
   const time = new Date(value).getTime();
   const seconds = Math.max(0, Math.floor((Date.now() - time) / 1000));
@@ -663,25 +673,30 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('dragenter', (event) => {
-  if (!event.dataTransfer?.types.includes('Files')) return;
+  if (!hasDraggedFiles(event.dataTransfer)) return;
   event.preventDefault();
   ui.dragDepth += 1;
   dropOverlay.hidden = false;
 });
 window.addEventListener('dragover', (event) => {
-  if (event.dataTransfer?.types.includes('Files')) event.preventDefault();
+  if (!hasDraggedFiles(event.dataTransfer)) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
 });
 window.addEventListener('dragleave', (event) => {
+  if (!hasDraggedFiles(event.dataTransfer)) return;
   event.preventDefault();
   ui.dragDepth = Math.max(0, ui.dragDepth - 1);
   if (!ui.dragDepth) dropOverlay.hidden = true;
 });
 window.addEventListener('drop', async (event) => {
+  if (!hasDraggedFiles(event.dataTransfer)) return;
   event.preventDefault();
   ui.dragDepth = 0;
   dropOverlay.hidden = true;
   try {
-    const paths = window.orbit.pathsFromFiles(event.dataTransfer.files);
+    const paths = pathsFromDrop(event.dataTransfer);
+    if (!paths.length) throw new Error('OrbitSend could not read the dropped item. Try Choose files instead.');
     await sendSelectedPaths(paths);
   } catch (error) {
     showToast({ tone: 'danger', title: 'Drop failed', message: error.message });

@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('orbit', {
   pickFiles: () => ipcRenderer.invoke('dialog:files'),
   pickFolder: () => ipcRenderer.invoke('dialog:folder'),
   pickDownloadFolder: () => ipcRenderer.invoke('dialog:download'),
-  pathsFromFiles: (files) => Array.from(files || []).map((file) => webUtils.getPathForFile(file)).filter(Boolean),
+  pathFromFile: (file) => webUtils.getPathForFile(file),
   startPairing: () => ipcRenderer.invoke('pairing:start'),
   stopPairing: () => ipcRenderer.invoke('pairing:stop'),
   pairDevice: (id, code) => ipcRenderer.invoke('device:pair', id, code),
