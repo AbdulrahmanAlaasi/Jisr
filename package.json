@@ -1,20 +1,20 @@
 {
-  "name": "orbitsend",
-  "version": "0.3.1",
-  "description": "Private, encrypted file and clipboard sharing between your computers.",
-  "homepage": "https://github.com/AbdulrahmanAlaasi/OrbitSend",
+  "name": "jisr",
+  "version": "0.4.0",
+  "description": "Private, encrypted file and clipboard sharing between Windows and Mac.",
+  "homepage": "https://jisr.alaasi.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AbdulrahmanAlaasi/OrbitSend.git"
+    "url": "git+https://github.com/AbdulrahmanAlaasi/Jisr.git"
   },
   "main": "src/main/index.js",
-  "author": "OrbitSend",
+  "author": "Abdulrahman Alaasi",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "test": "node --test tests/*.test.js",
-    "check": "node --check src/main/index.js && node --check src/main/crypto.js && node --check src/main/discovery.js && node --check src/main/transfer-service.js && node --check src/main/update-service.js && node --check src/renderer/app.js",
+    "check": "node --check src/main/index.js && node --check src/main/crypto.js && node --check src/main/discovery.js && node --check src/main/migration.js && node --check src/main/store.js && node --check src/main/transfer-service.js && node --check src/main/update-service.js && node --check src/preload.js && node --check src/renderer/app.js",
     "build": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
@@ -28,8 +28,8 @@
     "electron-builder": "26.15.3"
   },
   "build": {
-    "appId": "app.orbitsend.desktop",
-    "productName": "OrbitSend",
+    "appId": "dev.alaasi.jisr",
+    "productName": "Jisr",
     "asar": true,
     "directories": {
       "output": "release",
@@ -57,8 +57,8 @@
     ],
     "protocols": [
       {
-        "name": "OrbitSend link",
-        "schemes": ["orbitsend"]
+        "name": "Jisr link",
+        "schemes": ["jisr", "orbitsend"]
       }
     ],
     "mac": {
@@ -71,12 +71,12 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "extendInfo": {
-        "NSLocalNetworkUsageDescription": "OrbitSend uses your local network to discover your computers and transfer files directly between them.",
-        "NSBonjourServices": ["_orbitsend._tcp"]
+      "NSLocalNetworkUsageDescription": "Jisr uses your local network to discover your computers and transfer files directly between them.",
+      "NSBonjourServices": ["_jisr._tcp", "_orbitsend._tcp"]
       }
     },
     "win": {
-      "icon": "build/icon.ico",
+      "icon": "build/icon.png",
       "target": [
         { "target": "nsis", "arch": ["x64", "arm64"] },
         { "target": "portable", "arch": ["x64"] }

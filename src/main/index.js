@@ -18,12 +18,13 @@ const {
   Tray,
 } = require('electron');
 const QRCode = require('qrcode');
-const { OrbitStore } = require('./store');
+const { JisrStore } = require('./store');
 const { DeviceDiscovery } = require('./discovery');
+const { migrateLegacyPreferences } = require('./migration');
 const { TransferService } = require('./transfer-service');
 const { UpdateService } = require('./update-service');
 
-const APP_NAME = 'OrbitSend';
+const APP_NAME = 'Jisr';
 const MAX_SELECTED_PATHS = 2_000;
 
 let mainWindow = null;
@@ -34,14 +35,14 @@ let discovery = null;
 let transfers = null;
 let updateService = null;
 let lastNotifiedUpdate = null;
+let migrationState = { migrated: false };
 
 const iconSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#4f46e5"/></linearGradient></defs>
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#4338ca"/></linearGradient></defs>
   <rect width="64" height="64" rx="18" fill="url(#g)"/>
-  <circle cx="32" cy="32" r="17" fill="none" stroke="white" stroke-width="4" opacity=".95"/>
-  <circle cx="32" cy="32" r="5" fill="white"/>
-  <path d="M45 19l4-4m-34 34 4-4" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M13 39h38M17 39c2-14 9-21 15-21s13 7 15 21" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="49" r="3.5" fill="white"/>
 </svg>`;
 const appIcon = nativeImage.createFromDataURL(
   `data:image/svg+xml;base64,${Buffer.from(iconSvg).toString('base64')}`,
@@ -62,8 +63,14 @@ if (!app.requestSingleInstanceLock()) {
 async function initialize() {
   nativeTheme.themeSource = 'light';
   if (process.platform !== 'darwin') Menu.setApplicationMenu(null);
-  store = await new OrbitStore(
-    app.getPath('userData'),
+  const userDataPath = app.getPath('userData');
+  migrationState = await migrateLegacyPreferences({
+    legacyDirectory: path.join(app.getPath('appData'), 'OrbitSend'),
+    targetDirectory: userDataPath,
+    downloadsPath: app.getPath('downloads'),
+  });
+  store = await new JisrStore(
+    userDataPath,
     safeStorage,
     app.getPath('downloads'),
   ).init();
@@ -157,7 +164,7 @@ function refreshTrayMenu() {
   if (!tray) return;
   const nearby = combinedDevices().filter((device) => device.online && device.paired);
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Open OrbitSend', click: showWindow },
+    { label: 'Open Jisr', click: showWindow },
     { type: 'separator' },
     nearby.length
       ? { label: `${nearby.length} paired device${nearby.length === 1 ? '' : 's'} nearby`, enabled: false }
@@ -172,7 +179,7 @@ function refreshTrayMenu() {
       },
     },
     { type: 'separator' },
-    { label: 'Quit OrbitSend', click: () => { quitting = true; app.quit(); } },
+    { label: 'Quit Jisr', click: () => { quitting = true; app.quit(); } },
   ]));
 }
 
@@ -182,7 +189,7 @@ function wireEvents() {
     if (updateState.status === 'available' && updateState.latestVersion !== lastNotifiedUpdate) {
       lastNotifiedUpdate = updateState.latestVersion;
       notify(
-        'OrbitSend update available',
+        'Jisr update available',
         `Version ${updateState.latestVersion} is ready to download.`,
         showWindow,
       );
@@ -281,7 +288,7 @@ async function viewState() {
   let pairingQr = null;
   if (pairing) {
     const address = localAddresses()[0] || '';
-    const uri = `orbitsend://pair?device=${encodeURIComponent(store.identity.id)}&host=${encodeURIComponent(address)}&port=${transfers.port}&code=${pairing.code}`;
+    const uri = `jisr://pair?device=${encodeURIComponent(store.identity.id)}&host=${encodeURIComponent(address)}&port=${transfers.port}&code=${pairing.code}`;
     pairingQr = await QRCode.toDataURL(uri, {
       width: 240,
       margin: 1,
@@ -303,6 +310,7 @@ async function viewState() {
     history: store.history,
     pairing: pairing ? { ...pairing, qr: pairingQr } : null,
     updates: updateService.publicState(),
+    migration: migrationState,
   };
 }
 
@@ -397,8 +405,16 @@ function registerIpc() {
       throw new Error('No update is currently available.');
     }
     const url = new URL(update.downloadUrl);
-    const expectedPrefix = '/AbdulrahmanAlaasi/OrbitSend-Updates/releases/';
-    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || !url.pathname.startsWith(expectedPrefix)) {
+    const expectedPrefixes = [
+      '/AbdulrahmanAlaasi/OrbitSend-Updates/releases/',
+      '/AbdulrahmanAlaasi/Jisr-Updates/releases/',
+      '/AbdulrahmanAlaasi/Jisr/releases/',
+    ];
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname !== 'github.com' ||
+      !expectedPrefixes.some((prefix) => url.pathname.startsWith(prefix))
+    ) {
       throw new Error('The update download address could not be verified.');
     }
     await shell.openExternal(url.toString());
@@ -418,7 +434,7 @@ function registerIpc() {
   handle('shell:reveal', async (target) => {
     const resolved = path.resolve(String(target || store.settings.downloadPath));
     if (resolved !== path.resolve(store.settings.downloadPath) && !resolved.startsWith(`${path.resolve(store.settings.downloadPath)}${path.sep}`)) {
-      throw new Error('That path is outside the OrbitSend download folder.');
+      throw new Error('That path is outside the Jisr download folder.');
     }
     const error = await shell.openPath(resolved);
     if (error) throw new Error(error);

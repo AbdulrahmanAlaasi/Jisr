@@ -24,11 +24,11 @@ async function run() {
   });
   await window.webContents.debugger.sendCommand('DOM.setFileInputFiles', {
     nodeId,
-    files: [process.env.ORBITSEND_DROP_FIXTURE],
+    files: [process.env.JISR_DROP_FIXTURE],
   });
 
   const resolvedPath = await window.webContents.executeJavaScript(
-    "window.orbit.pathFromFile(document.getElementById('drop-file').files[0])",
+    "window.jisr.pathFromFile(document.getElementById('drop-file').files[0])",
   );
   process.stdout.write(`${JSON.stringify({ resolvedPath })}\n`);
   app.quit();

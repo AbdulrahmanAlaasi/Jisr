@@ -79,7 +79,7 @@ function safeErrorMessage(error) {
     return 'The other device did not respond.';
   }
   if (error?.code === 'ECONNREFUSED' || error?.cause?.code === 'ECONNREFUSED') {
-    return 'The other device is offline or OrbitSend is blocked by its firewall.';
+    return 'The other device is offline or Jisr is blocked by its firewall.';
   }
   return error?.message || 'The transfer could not be completed.';
 }
@@ -505,7 +505,7 @@ class TransferService extends EventEmitter {
       const relative = path.relative(transfer.destination, outputPath);
       if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Unsafe destination path.');
       await fs.mkdir(path.dirname(outputPath), { recursive: true });
-      const partialPath = `${outputPath}.orbitsend-part-${transfer.id}`;
+      const partialPath = `${outputPath}.jisr-part-${transfer.id}`;
       await fs.writeFile(partialPath, Buffer.alloc(0), { flag: 'wx' });
       transfer.files.push({
         ...item,

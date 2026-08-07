@@ -9,6 +9,7 @@ const ui = {
   historyFilter: 'all',
   historySearch: '',
   dragDepth: 0,
+  migrationNoticeShown: false,
 };
 
 const mainView = document.getElementById('main-view');
@@ -66,7 +67,7 @@ function hasDraggedFiles(dataTransfer) {
 
 function pathsFromDrop(dataTransfer) {
   return Array.from(dataTransfer?.files || [])
-    .map((file) => window.orbit.pathFromFile(file))
+    .map((file) => window.jisr.pathFromFile(file))
     .filter(Boolean);
 }
 
@@ -127,7 +128,7 @@ function updateChrome() {
 
 function render() {
   if (!ui.state) {
-    mainView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◌</div><strong>Starting OrbitSend…</strong><span>Preparing a private connection on your local network.</span></div>';
+    mainView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◌</div><strong>Starting Jisr…</strong><span>Preparing a private connection on your local network.</span></div>';
     return;
   }
   ensureSelection();
@@ -135,6 +136,17 @@ function render() {
   if (ui.view === 'history') renderHistory();
   else if (ui.view === 'settings') renderSettings();
   else renderHome();
+}
+
+function showMigrationNotice(state) {
+  if (!state?.migration?.migrated || ui.migrationNoticeShown) return;
+  ui.migrationNoticeShown = true;
+  showToast({
+    tone: 'success',
+    title: 'Welcome to Jisr',
+    message: 'Your settings and history were carried over. Pair your computers once under the new name.',
+    duration: 10_000,
+  });
 }
 
 function renderHome() {
@@ -148,7 +160,7 @@ function renderHome() {
   mainView.innerHTML = `
     <div class="content">
       <header class="page-head">
-        <div><span class="eyebrow">OrbitSend</span><h1>Your devices, one drop away.</h1><p>Choose a computer, then send files, folders, links, or text directly.</p></div>
+        <div><span class="eyebrow">Jisr · جسر</span><h1>Your devices, one bridge.</h1><p>Choose a computer, then send files, folders, links, or text directly.</p></div>
         <button class="status-button ${state.settings.receivingEnabled ? '' : 'paused'}" data-action="toggle-receiving">
           <span class="status-dot"></span>${state.settings.receivingEnabled ? 'Ready to receive' : 'Receiving paused'}
         </button>
@@ -163,7 +175,7 @@ function renderHome() {
         </div>
         ${allDevices.length ? `<div class="device-row">${allDevices.map(renderDeviceCard).join('')}</div>` : `
           <div class="empty-device">
-            <span>No other OrbitSend devices found yet. Open OrbitSend on your other computer.</span>
+            <span>No other Jisr devices found yet. Open Jisr on your other computer.</span>
             <button class="button small" data-action="pair-open">Pair manually</button>
           </div>`}
       </section>
@@ -177,7 +189,7 @@ function renderHome() {
           <div class="drop-zone ${device ? '' : 'disabled'}">
             <div class="drop-zone-icon">${icons.upload}</div>
             <strong>${device ? 'Drop anything here' : 'Choose an online device first'}</strong>
-            <p>${device ? 'Files, folders, photos, and videos — direct and encrypted.' : 'Pair both computers and keep OrbitSend open on each.'}</p>
+            <p>${device ? 'Files, folders, photos, and videos — direct and encrypted.' : 'Pair both computers and keep Jisr open on each.'}</p>
             <div class="drop-actions">
               <button class="button small" data-action="choose-files" ${device ? '' : 'disabled'}>Choose files</button>
               <button class="button small" data-action="choose-folder" ${device ? '' : 'disabled'}>Choose folder</button>
@@ -326,24 +338,24 @@ function renderSettings() {
       <header class="page-head"><div><h1>Settings</h1><p>Control how this computer appears and receives things.</p></div></header>
       <div class="settings-layout">
         <section class="settings-card">
-          <div class="settings-card-head"><h2>This device</h2><p>Your device name and local identity are visible only to OrbitSend devices nearby.</p></div>
+          <div class="settings-card-head"><h2>This device</h2><p>Your device name and local identity are visible only to Jisr devices nearby.</p></div>
           <div class="setting-row"><div class="setting-copy"><strong>Device name</strong><span>Shown on your other computers.</span></div><input class="setting-input" data-setting-text="deviceName" value="${escapeHtml(settings.deviceName)}" maxlength="40"></div>
           <div class="setting-row"><div class="setting-copy"><strong>Security fingerprint</strong><span>Use this to double-check a paired connection.</span></div><code class="fingerprint">${escapeHtml(identity.fingerprint)}</code></div>
-          <div class="setting-row"><div class="setting-copy"><strong>Start at login</strong><span>Keep OrbitSend ready in the background.</span></div>${renderSwitch('launchAtLogin', settings.launchAtLogin)}</div>
+          <div class="setting-row"><div class="setting-copy"><strong>Start at login</strong><span>Keep Jisr ready in the background.</span></div>${renderSwitch('launchAtLogin', settings.launchAtLogin)}</div>
           <div class="setting-row"><div class="setting-copy"><strong>Keep running in tray</strong><span>Closing the window keeps transfers available.</span></div>${renderSwitch('keepRunningInTray', settings.keepRunningInTray)}</div>
         </section>
 
         <section class="settings-card">
           <div class="settings-card-head"><h2>Receiving</h2><p>Incoming files are verified before appearing in your download folder.</p></div>
-          <div class="setting-row"><div class="setting-copy"><strong>Save received files to</strong><span>OrbitSend creates safe, non-overwriting file names.</span></div><div class="path-control"><span class="path-value" title="${escapeHtml(settings.downloadPath)}">${escapeHtml(settings.downloadPath)}</span><button class="button small" data-action="choose-download">Change</button></div></div>
+          <div class="setting-row"><div class="setting-copy"><strong>Save received files to</strong><span>Jisr creates safe, non-overwriting file names.</span></div><div class="path-control"><span class="path-value" title="${escapeHtml(settings.downloadPath)}">${escapeHtml(settings.downloadPath)}</span><button class="button small" data-action="choose-download">Change</button></div></div>
           <div class="setting-row"><div class="setting-copy"><strong>Auto-accept trusted devices</strong><span>Only devices you individually mark as trusted.</span></div>${renderSwitch('autoAcceptTrusted', settings.autoAcceptTrusted)}</div>
           <div class="setting-row"><div class="setting-copy"><strong>Copy received links and text</strong><span>Places secure messages on your clipboard automatically.</span></div>${renderSwitch('copyReceivedText', settings.copyReceivedText)}</div>
         </section>
 
         <section class="settings-card">
           <div class="settings-card-head"><h2>Updates</h2><p>Check the public installer channel without exposing the private source repository.</p></div>
-          <div class="setting-row"><div class="setting-copy"><strong>Automatically check for updates</strong><span>Checks when OrbitSend opens and every six hours.</span></div>${renderSwitch('checkForUpdates', settings.checkForUpdates)}</div>
-          <div class="setting-row"><div class="setting-copy"><strong>OrbitSend ${escapeHtml(updates.currentVersion)}</strong><span>${updates.status === 'available' ? `Version ${escapeHtml(updates.latestVersion)} is available.` : updates.status === 'checking' ? 'Checking for updates…' : updates.error ? escapeHtml(updates.error) : 'You can check at any time.'}</span></div><button class="button small ${updates.status === 'available' ? 'primary' : ''}" data-action="${updates.status === 'available' ? 'update-open' : 'update-check'}" ${updates.status === 'checking' ? 'disabled' : ''}>${updates.status === 'available' ? 'View update' : updates.status === 'checking' ? 'Checking…' : 'Check now'}</button></div>
+          <div class="setting-row"><div class="setting-copy"><strong>Automatically check for updates</strong><span>Checks when Jisr opens and every six hours.</span></div>${renderSwitch('checkForUpdates', settings.checkForUpdates)}</div>
+          <div class="setting-row"><div class="setting-copy"><strong>Jisr ${escapeHtml(updates.currentVersion)}</strong><span>${updates.status === 'available' ? `Version ${escapeHtml(updates.latestVersion)} is available.` : updates.status === 'checking' ? 'Checking for updates…' : updates.error ? escapeHtml(updates.error) : 'You can check at any time.'}</span></div><button class="button small ${updates.status === 'available' ? 'primary' : ''}" data-action="${updates.status === 'available' ? 'update-open' : 'update-check'}" ${updates.status === 'checking' ? 'disabled' : ''}>${updates.status === 'available' ? 'View update' : updates.status === 'checking' ? 'Checking…' : 'Check now'}</button></div>
         </section>
 
         <section class="settings-card">
@@ -374,8 +386,8 @@ function closeModal() {
 }
 
 async function showPairingModal() {
-  await window.orbit.startPairing();
-  ui.state = await window.orbit.getState();
+  await window.jisr.startPairing();
+  ui.state = await window.jisr.getState();
   const pairing = ui.state.pairing;
   openModal(`
     <div class="modal-head"><div><h2>Pair another computer</h2><p>On your other device, select <strong>${escapeHtml(ui.state.identity.name)}</strong> and enter this code.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
@@ -396,7 +408,7 @@ function showManualConnect() {
     <div class="modal-head"><div><h2>Connect by IP address</h2><p>Use this when your network blocks automatic nearby-device discovery.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
     <div class="modal-body">
       <div class="pair-help">This computer’s address: <span class="fingerprint">${escapeHtml(ownAddress)}</span></div>
-      <div class="field"><label for="manual-address">Other computer’s OrbitSend address</label><input id="manual-address" placeholder="192.168.1.24:53318"></div>
+      <div class="field"><label for="manual-address">Other computer’s Jisr address</label><input id="manual-address" placeholder="192.168.1.24:53318"></div>
       <div class="security-note">${icons.shield}<span>Enter an address only from a computer you control. Pairing still requires its six-digit code.</span></div>
     </div>
     <div class="modal-foot"><button class="button ghost" data-action="pair-open">Back</button><button class="button primary" data-action="manual-probe">Find device</button></div>
@@ -415,7 +427,7 @@ function updatePairExpiry() {
 
 function showCodeEntry(device) {
   openModal(`
-    <div class="modal-head"><div><h2>Pair with ${escapeHtml(device.name)}</h2><p>Open OrbitSend on that computer and choose “Pair a device.”</p></div><button class="modal-close" data-action="modal-close">×</button></div>
+    <div class="modal-head"><div><h2>Pair with ${escapeHtml(device.name)}</h2><p>Open Jisr on that computer and choose “Pair a device.”</p></div><button class="modal-close" data-action="modal-close">×</button></div>
     <div class="modal-body">
       <div class="device-detail"><div class="device-avatar">${deviceIcon(device.platform)}</div><div class="device-detail-copy"><strong>${escapeHtml(device.name)}</strong><span>${platformLabel(device.platform)} · ${escapeHtml(device.address || 'Nearby')}</span></div></div>
       <div class="field"><label for="pair-input">Six-digit code shown on ${escapeHtml(device.name)}</label><input class="code-input" id="pair-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
@@ -453,7 +465,7 @@ function showIncomingModal(transfer) {
     <div class="modal-head"><div><h2>Incoming transfer</h2><p>${escapeHtml(transfer.peerName)} wants to send something to this computer.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
     <div class="modal-body">
       <div class="device-detail"><div class="transfer-icon">${fileIcon(transfer.kind)}</div><div class="device-detail-copy"><strong>${escapeHtml(transfer.summary)}</strong><span>${formatBytes(transfer.totalBytes)} · ${escapeHtml(transfer.itemNames.join(', '))}</span></div></div>
-      <div class="security-note">${icons.lock}<span>The transfer is encrypted and will be verified before it appears in your OrbitSend folder.</span></div>
+      <div class="security-note">${icons.lock}<span>The transfer is encrypted and will be verified before it appears in your Jisr folder.</span></div>
     </div>
     <div class="modal-foot"><button class="button ghost" data-action="reject-transfer" data-id="${transfer.id}">Decline</button><button class="button primary" data-action="accept-transfer" data-id="${transfer.id}">Accept</button></div>
   `);
@@ -464,11 +476,11 @@ function showUpdateModal() {
   if (!update || update.status !== 'available') return;
   const notes = update.releaseNotes.trim() || 'This update contains improvements and fixes.';
   openModal(`
-    <div class="modal-head"><div><span class="eyebrow">New version</span><h2>OrbitSend ${escapeHtml(update.latestVersion)}</h2><p>You’re currently using version ${escapeHtml(update.currentVersion)}.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
+    <div class="modal-head"><div><span class="eyebrow">New version</span><h2>Jisr ${escapeHtml(update.latestVersion)}</h2><p>You’re currently using version ${escapeHtml(update.currentVersion)}.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
     <div class="modal-body">
       <div class="update-hero"><div class="update-hero-icon">↻</div><div><strong>Ready to update</strong><span>${escapeHtml(update.assetName || 'Installer available')}</span></div></div>
       <div class="update-notes">${escapeHtml(notes).replaceAll('\n', '<br>')}</div>
-      <div class="security-note">${icons.shield}<span>The installer is downloaded from the public OrbitSend update channel. Your pairing and settings remain on this computer.</span></div>
+      <div class="security-note">${icons.shield}<span>The installer is downloaded from the public Jisr update channel. Your pairing and settings remain on this computer.</span></div>
     </div>
     <div class="modal-foot"><button class="button ghost" data-action="modal-close">Later</button><button class="button primary" data-action="update-download">Download update</button></div>
   `);
@@ -488,7 +500,7 @@ async function sendSelectedPaths(paths) {
   const device = selectedDevice();
   if (!device) throw new Error('Choose an online paired device first.');
   if (!paths.length) return;
-  await window.orbit.sendPaths(device.id, paths);
+  await window.jisr.sendPaths(device.id, paths);
   showToast({ tone: 'success', title: 'Transfer requested', message: `${paths.length === 1 ? 'Item' : 'Items'} ready to send to ${device.name}.` });
 }
 
@@ -497,10 +509,10 @@ async function action(button) {
   if (!name) return;
   if (name === 'modal-close') return closeModal();
   if (name === 'go-send') { ui.view = 'home'; closeModal(); return render(); }
-  if (name === 'toggle-receiving') return window.orbit.updateSettings({ receivingEnabled: !ui.state.settings.receivingEnabled });
+  if (name === 'toggle-receiving') return window.jisr.updateSettings({ receivingEnabled: !ui.state.settings.receivingEnabled });
   if (name === 'pair-open') return showPairingModal();
   if (name === 'manual-connect-open') return showManualConnect();
-  if (name === 'stop-pairing') { await window.orbit.stopPairing(); closeModal(); return; }
+  if (name === 'stop-pairing') { await window.jisr.stopPairing(); closeModal(); return; }
   if (name === 'pair-device') {
     const device = ui.state.devices.find((item) => item.id === button.dataset.id);
     if (device) showCodeEntry(device);
@@ -510,7 +522,7 @@ async function action(button) {
     const code = document.getElementById('pair-input')?.value || '';
     button.disabled = true;
     button.textContent = 'Pairing…';
-    await window.orbit.pairDevice(button.dataset.id, code);
+    await window.jisr.pairDevice(button.dataset.id, code);
     closeModal();
     return;
   }
@@ -519,8 +531,8 @@ async function action(button) {
     if (!address) throw new Error('Enter the IP address shown on the other computer.');
     button.disabled = true;
     button.textContent = 'Searching…';
-    const found = await window.orbit.probeDevice(address);
-    ui.state = await window.orbit.getState();
+    const found = await window.jisr.probeDevice(address);
+    ui.state = await window.jisr.getState();
     const device = ui.state.devices.find((item) => item.id === found.id);
     if (device) showCodeEntry(device);
     return;
@@ -528,7 +540,7 @@ async function action(button) {
   if (name === 'select-device') {
     const device = ui.state.devices.find((item) => item.id === button.dataset.id);
     if (device?.online && device.paired) { ui.selectedDeviceId = device.id; renderHome(); }
-    else if (device && !device.online) showToast({ tone: 'warning', title: 'Device is offline', message: 'Open OrbitSend on that computer and check the Wi‑Fi connection.' });
+    else if (device && !device.online) showToast({ tone: 'warning', title: 'Device is offline', message: 'Open Jisr on that computer and check the Wi‑Fi connection.' });
     return;
   }
   if (name === 'device-settings') {
@@ -542,13 +554,13 @@ async function action(button) {
     return;
   }
   if (name === 'remove-device') {
-    await window.orbit.removeDevice(button.dataset.id);
+    await window.jisr.removeDevice(button.dataset.id);
     if (ui.selectedDeviceId === button.dataset.id) ui.selectedDeviceId = null;
     closeModal();
     return;
   }
-  if (name === 'choose-files') return sendSelectedPaths(await window.orbit.pickFiles());
-  if (name === 'choose-folder') return sendSelectedPaths(await window.orbit.pickFolder());
+  if (name === 'choose-files') return sendSelectedPaths(await window.jisr.pickFiles());
+  if (name === 'choose-folder') return sendSelectedPaths(await window.jisr.pickFolder());
   if (name === 'compose-kind') {
     ui.composeKind = button.dataset.kind;
     renderHome();
@@ -556,7 +568,7 @@ async function action(button) {
     return;
   }
   if (name === 'paste-clipboard') {
-    ui.composeValue = await window.orbit.readClipboard();
+    ui.composeValue = await window.jisr.readClipboard();
     if (/^https?:\/\//i.test(ui.composeValue.trim())) ui.composeKind = 'link';
     renderHome();
     return;
@@ -565,62 +577,62 @@ async function action(button) {
     const device = selectedDevice();
     if (!device) throw new Error('Choose a device first.');
     const value = document.getElementById('compose-value')?.value || ui.composeValue;
-    await window.orbit.sendText(device.id, value, ui.composeKind);
+    await window.jisr.sendText(device.id, value, ui.composeKind);
     ui.composeValue = '';
     renderHome();
     return;
   }
   if (name === 'accept-transfer') {
-    await window.orbit.respondTransfer(button.dataset.id, true);
+    await window.jisr.respondTransfer(button.dataset.id, true);
     closeModal();
     return;
   }
   if (name === 'reject-transfer') {
-    await window.orbit.respondTransfer(button.dataset.id, false);
+    await window.jisr.respondTransfer(button.dataset.id, false);
     closeModal();
     return;
   }
-  if (name === 'cancel-transfer') return window.orbit.cancelTransfer(button.dataset.id);
+  if (name === 'cancel-transfer') return window.jisr.cancelTransfer(button.dataset.id);
   if (name === 'history-filter') { ui.historyFilter = button.dataset.filter; return renderHistory(); }
   if (name === 'clear-history') {
     openModal(`<div class="modal-head"><div><h2>Clear transfer history?</h2><p>This removes the activity list only. Received files are not deleted.</p></div><button class="modal-close" data-action="modal-close">×</button></div><div class="modal-foot"><button class="button ghost" data-action="modal-close">Cancel</button><button class="button danger" data-action="clear-history-confirm">Clear history</button></div>`);
     return;
   }
-  if (name === 'clear-history-confirm') { await window.orbit.clearHistory(); closeModal(); return; }
+  if (name === 'clear-history-confirm') { await window.jisr.clearHistory(); closeModal(); return; }
   if (name === 'update-open') return showUpdateModal();
   if (name === 'update-check') {
     button.disabled = true;
     button.textContent = 'Checking…';
-    const result = await window.orbit.checkForUpdates();
+    const result = await window.jisr.checkForUpdates();
     ui.state.updates = result;
     render();
     if (result.status === 'available') showUpdateModal();
-    else if (result.status === 'current') showToast({ tone: 'success', title: 'OrbitSend is up to date', message: `Version ${result.currentVersion} is the latest version.` });
+    else if (result.status === 'current') showToast({ tone: 'success', title: 'Jisr is up to date', message: `Version ${result.currentVersion} is the latest version.` });
     else if (result.error) throw new Error(result.error);
     return;
   }
   if (name === 'update-download') {
     button.disabled = true;
     button.textContent = 'Opening download…';
-    await window.orbit.downloadUpdate();
+    await window.jisr.downloadUpdate();
     closeModal();
-    showToast({ tone: 'success', title: 'Download opened', message: 'Install the new version over OrbitSend when the download finishes.' });
+    showToast({ tone: 'success', title: 'Download opened', message: 'Install the new version over Jisr when the download finishes.' });
     return;
   }
   if (name === 'choose-download') {
-    const downloadPath = await window.orbit.pickDownloadFolder();
-    if (downloadPath) await window.orbit.updateSettings({ downloadPath });
+    const downloadPath = await window.jisr.pickDownloadFolder();
+    if (downloadPath) await window.jisr.updateSettings({ downloadPath });
     return;
   }
-  if (name === 'reveal-download') return window.orbit.reveal(ui.state.settings.downloadPath);
+  if (name === 'reveal-download') return window.jisr.reveal(ui.state.settings.downloadPath);
   if (name === 'history-open-link') {
     const entry = ui.state.history.find((item) => item.id === button.dataset.id);
-    if (entry) return window.orbit.openLink(entry.content);
+    if (entry) return window.jisr.openLink(entry.content);
   }
   if (name === 'history-copy') {
     const entry = ui.state.history.find((item) => item.id === button.dataset.id);
     if (entry) {
-      await window.orbit.writeClipboard(entry.content);
+      await window.jisr.writeClipboard(entry.content);
       showToast({ tone: 'success', title: 'Copied', message: 'The received content is on your clipboard.' });
     }
   }
@@ -647,17 +659,17 @@ document.addEventListener('click', (event) => {
 document.addEventListener('change', (event) => {
   const setting = event.target.dataset.setting;
   if (setting) {
-    window.orbit.updateSettings({ [setting]: event.target.checked }).catch((error) => showToast({ tone: 'danger', title: 'Setting not saved', message: error.message }));
+    window.jisr.updateSettings({ [setting]: event.target.checked }).catch((error) => showToast({ tone: 'danger', title: 'Setting not saved', message: error.message }));
     return;
   }
   const textSetting = event.target.dataset.settingText;
   if (textSetting) {
-    window.orbit.updateSettings({ [textSetting]: event.target.value }).catch((error) => showToast({ tone: 'danger', title: 'Setting not saved', message: error.message }));
+    window.jisr.updateSettings({ [textSetting]: event.target.value }).catch((error) => showToast({ tone: 'danger', title: 'Setting not saved', message: error.message }));
     return;
   }
   const peerId = event.target.dataset.deviceTrust;
   if (peerId) {
-    window.orbit.updateDevice(peerId, { trusted: event.target.checked }).catch((error) => showToast({ tone: 'danger', title: 'Device not updated', message: error.message }));
+    window.jisr.updateDevice(peerId, { trusted: event.target.checked }).catch((error) => showToast({ tone: 'danger', title: 'Device not updated', message: error.message }));
   }
 });
 
@@ -696,20 +708,21 @@ window.addEventListener('drop', async (event) => {
   dropOverlay.hidden = true;
   try {
     const paths = pathsFromDrop(event.dataTransfer);
-    if (!paths.length) throw new Error('OrbitSend could not read the dropped item. Try Choose files instead.');
+    if (!paths.length) throw new Error('Jisr could not read the dropped item. Try Choose files instead.');
     await sendSelectedPaths(paths);
   } catch (error) {
     showToast({ tone: 'danger', title: 'Drop failed', message: error.message });
   }
 });
 
-window.orbit.onState((state) => {
+window.jisr.onState((state) => {
   ui.state = state;
   render();
+  showMigrationNotice(state);
 });
-window.orbit.onToast(showToast);
-window.orbit.onIncomingRequest(showIncomingModal);
-window.orbit.onReceivedMessage((transfer) => {
+window.jisr.onToast(showToast);
+window.jisr.onIncomingRequest(showIncomingModal);
+window.jisr.onReceivedMessage((transfer) => {
   showToast({
     tone: 'success',
     title: transfer.kind === 'link' ? 'Link received' : 'Text received',
@@ -717,7 +730,7 @@ window.orbit.onReceivedMessage((transfer) => {
     duration: 7000,
   });
 });
-window.orbit.onProgress((transfer) => {
+window.jisr.onProgress((transfer) => {
   if (!ui.state) return;
   const index = ui.state.transfers.findIndex((item) => item.id === transfer.id);
   if (index >= 0) ui.state.transfers[index] = transfer;
@@ -726,11 +739,12 @@ window.orbit.onProgress((transfer) => {
 
 window.setInterval(updatePairExpiry, 1_000);
 
-window.orbit.getState()
+window.jisr.getState()
   .then((state) => {
     ui.state = state;
     render();
+    showMigrationNotice(state);
   })
   .catch((error) => {
-    mainView.innerHTML = `<div class="empty-state"><div class="empty-state-icon">!</div><strong>OrbitSend could not start</strong><span>${escapeHtml(error.message)}</span></div>`;
+    mainView.innerHTML = `<div class="empty-state"><div class="empty-state-icon">!</div><strong>Jisr could not start</strong><span>${escapeHtml(error.message)}</span></div>`;
   });

@@ -8,13 +8,13 @@ const path = require('node:path');
 const test = require('node:test');
 
 test('the sandboxed preload resolves a real dropped file path', async () => {
-  const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'orbitsend-drop-'));
+  const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'jisr-drop-'));
   const filePath = path.join(tempDirectory, 'drag-drop-proof.txt');
-  await fs.writeFile(filePath, 'OrbitSend drag-and-drop verification.');
+  await fs.writeFile(filePath, 'Jisr drag-and-drop verification.');
 
   try {
     const result = await new Promise((resolve, reject) => {
-      const environment = { ...process.env, ORBITSEND_DROP_FIXTURE: filePath };
+      const environment = { ...process.env, JISR_DROP_FIXTURE: filePath };
       delete environment.ELECTRON_RUN_AS_NODE;
       const child = spawn(require('electron'), [path.join(__dirname, 'fixtures', 'file-drop-main.js')], {
         env: environment,
