@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   showNotifications: true,
   soundEnabled: true,
   keepRunningInTray: true,
+  checkForUpdates: true,
 };
 
 class OrbitStore {

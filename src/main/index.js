@@ -21,6 +21,7 @@ const QRCode = require('qrcode');
 const { OrbitStore } = require('./store');
 const { DeviceDiscovery } = require('./discovery');
 const { TransferService } = require('./transfer-service');
+const { UpdateService } = require('./update-service');
 
 const APP_NAME = 'OrbitSend';
 const MAX_SELECTED_PATHS = 2_000;
@@ -31,6 +32,8 @@ let quitting = false;
 let store = null;
 let discovery = null;
 let transfers = null;
+let updateService = null;
+let lastNotifiedUpdate = null;
 
 const iconSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
@@ -65,6 +68,13 @@ async function initialize() {
     app.getPath('downloads'),
   ).init();
 
+  updateService = new UpdateService({
+    currentVersion: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+    isEnabled: () => Boolean(store.settings.checkForUpdates),
+  });
+
   let serviceRef = null;
   discovery = new DeviceDiscovery(
     () => serviceRef?.publicIdentity(),
@@ -80,6 +90,11 @@ async function initialize() {
   createWindow();
   createTray();
   applyLoginSetting();
+
+  const initialUpdateTimer = setTimeout(() => updateService.check().catch(() => {}), 3_000);
+  initialUpdateTimer.unref?.();
+  const updateInterval = setInterval(() => updateService.check().catch(() => {}), 6 * 60 * 60 * 1000);
+  updateInterval.unref?.();
 
   powerMonitor.on('resume', () => discovery.announce());
   app.on('activate', () => showWindow());
@@ -162,6 +177,17 @@ function refreshTrayMenu() {
 }
 
 function wireEvents() {
+  updateService.on('state', (updateState) => {
+    broadcastState();
+    if (updateState.status === 'available' && updateState.latestVersion !== lastNotifiedUpdate) {
+      lastNotifiedUpdate = updateState.latestVersion;
+      notify(
+        'OrbitSend update available',
+        `Version ${updateState.latestVersion} is ready to download.`,
+        showWindow,
+      );
+    }
+  });
   discovery.on('devices', () => {
     broadcastState();
     refreshTrayMenu();
@@ -276,6 +302,7 @@ async function viewState() {
     transfers: transfers.activeTransfers(),
     history: store.history,
     pairing: pairing ? { ...pairing, qr: pairingQr } : null,
+    updates: updateService.publicState(),
   };
 }
 
@@ -359,12 +386,30 @@ function registerIpc() {
     await store.clearHistory();
     await broadcastState();
   });
+  handle('updates:check', async () => {
+    const result = await updateService.check({ manual: true });
+    await broadcastState();
+    return result;
+  });
+  handle('updates:download', async () => {
+    const update = updateService.publicState();
+    if (update.status !== 'available' || !update.downloadUrl) {
+      throw new Error('No update is currently available.');
+    }
+    const url = new URL(update.downloadUrl);
+    const expectedPrefix = '/AbdulrahmanAlaasi/OrbitSend-Updates/releases/';
+    if (url.protocol !== 'https:' || url.hostname !== 'github.com' || !url.pathname.startsWith(expectedPrefix)) {
+      throw new Error('The update download address could not be verified.');
+    }
+    await shell.openExternal(url.toString());
+  });
   handle('settings:update', async (changes) => {
     const previousName = store.settings.deviceName;
     await store.updateSettings(changes || {});
     if (previousName !== store.settings.deviceName || 'receivingEnabled' in (changes || {})) discovery.announce();
     applyLoginSetting();
     refreshTrayMenu();
+    if (changes?.checkForUpdates === true) updateService.check({ manual: true }).catch(() => {});
     await broadcastState();
     return store.settings;
   });

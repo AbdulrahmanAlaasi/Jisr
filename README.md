@@ -18,6 +18,7 @@ storage, or upload limits.
 - Safe, non-overwriting destination names and path-traversal protection
 - Background tray mode, native notifications, and launch-at-login support
 - Manual IP connection for networks that block multicast discovery
+- In-app update-available indicator with platform-specific installer download
 
 ## Install on both computers
 
@@ -58,6 +59,19 @@ npm run dist:mac
 macOS packages must be built on macOS. The included GitHub Actions workflow
 builds both platforms independently when run manually or when a `v*` tag is
 pushed.
+
+## Updates
+
+OrbitSend checks the public installer-only
+[`OrbitSend-Updates`](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates)
+channel at launch and every six hours. When a newer semantic version is
+published, an update card appears in the sidebar. It opens a release dialog and
+downloads the correct DMG or Windows installer when selected.
+
+The current development builds are not Apple-notarized, so the update is
+downloaded for user-approved installation instead of silently replacing the
+application. Fully unattended macOS installation should only be enabled after
+consistent Apple Developer ID signing and notarization are configured.
 
 ## Network and security notes
 

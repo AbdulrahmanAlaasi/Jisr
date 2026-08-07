@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('orbit', {
   respondTransfer: (id, accept) => ipcRenderer.invoke('transfer:respond', id, accept),
   cancelTransfer: (id) => ipcRenderer.invoke('transfer:cancel', id),
   clearHistory: () => ipcRenderer.invoke('history:clear'),
+  checkForUpdates: () => ipcRenderer.invoke('updates:check'),
+  downloadUpdate: () => ipcRenderer.invoke('updates:download'),
   updateSettings: (changes) => ipcRenderer.invoke('settings:update', changes),
   readClipboard: () => ipcRenderer.invoke('clipboard:read'),
   writeClipboard: (value) => ipcRenderer.invoke('clipboard:write', value),

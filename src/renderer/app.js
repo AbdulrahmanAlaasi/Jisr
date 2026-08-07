@@ -99,6 +99,15 @@ function updateChrome() {
   historyBadge.hidden = failed === 0;
   historyBadge.textContent = String(failed);
   const localDevice = document.getElementById('local-device');
+  const updateSlot = document.getElementById('update-slot');
+  const update = ui.state?.updates;
+  if (updateSlot) {
+    updateSlot.innerHTML = update?.status === 'available' ? `
+      <button class="update-alert" data-action="update-open">
+        <span class="update-alert-icon">↻</span>
+        <span><strong>Update available</strong><small>Version ${escapeHtml(update.latestVersion)}</small></span>
+      </button>` : '';
+  }
   if (ui.state) {
     localDevice.innerHTML = `
       <div class="local-avatar">${ui.state.identity.platform === 'darwin' ? '⌘' : '⊞'}</div>
@@ -301,7 +310,7 @@ function renderHistoryItem(entry) {
 }
 
 function renderSettings() {
-  const { settings, identity } = ui.state;
+  const { settings, identity, updates } = ui.state;
   mainView.innerHTML = `
     <div class="content">
       <header class="page-head"><div><h1>Settings</h1><p>Control how this computer appears and receives things.</p></div></header>
@@ -319,6 +328,12 @@ function renderSettings() {
           <div class="setting-row"><div class="setting-copy"><strong>Save received files to</strong><span>OrbitSend creates safe, non-overwriting file names.</span></div><div class="path-control"><span class="path-value" title="${escapeHtml(settings.downloadPath)}">${escapeHtml(settings.downloadPath)}</span><button class="button small" data-action="choose-download">Change</button></div></div>
           <div class="setting-row"><div class="setting-copy"><strong>Auto-accept trusted devices</strong><span>Only devices you individually mark as trusted.</span></div>${renderSwitch('autoAcceptTrusted', settings.autoAcceptTrusted)}</div>
           <div class="setting-row"><div class="setting-copy"><strong>Copy received links and text</strong><span>Places secure messages on your clipboard automatically.</span></div>${renderSwitch('copyReceivedText', settings.copyReceivedText)}</div>
+        </section>
+
+        <section class="settings-card">
+          <div class="settings-card-head"><h2>Updates</h2><p>Check the public installer channel without exposing the private source repository.</p></div>
+          <div class="setting-row"><div class="setting-copy"><strong>Automatically check for updates</strong><span>Checks when OrbitSend opens and every six hours.</span></div>${renderSwitch('checkForUpdates', settings.checkForUpdates)}</div>
+          <div class="setting-row"><div class="setting-copy"><strong>OrbitSend ${escapeHtml(updates.currentVersion)}</strong><span>${updates.status === 'available' ? `Version ${escapeHtml(updates.latestVersion)} is available.` : updates.status === 'checking' ? 'Checking for updates…' : updates.error ? escapeHtml(updates.error) : 'You can check at any time.'}</span></div><button class="button small ${updates.status === 'available' ? 'primary' : ''}" data-action="${updates.status === 'available' ? 'update-open' : 'update-check'}" ${updates.status === 'checking' ? 'disabled' : ''}>${updates.status === 'available' ? 'View update' : updates.status === 'checking' ? 'Checking…' : 'Check now'}</button></div>
         </section>
 
         <section class="settings-card">
@@ -431,6 +446,21 @@ function showIncomingModal(transfer) {
       <div class="security-note">${icons.lock}<span>The transfer is encrypted and will be verified before it appears in your OrbitSend folder.</span></div>
     </div>
     <div class="modal-foot"><button class="button ghost" data-action="reject-transfer" data-id="${transfer.id}">Decline</button><button class="button primary" data-action="accept-transfer" data-id="${transfer.id}">Accept</button></div>
+  `);
+}
+
+function showUpdateModal() {
+  const update = ui.state?.updates;
+  if (!update || update.status !== 'available') return;
+  const notes = update.releaseNotes.trim() || 'This update contains improvements and fixes.';
+  openModal(`
+    <div class="modal-head"><div><span class="eyebrow">New version</span><h2>OrbitSend ${escapeHtml(update.latestVersion)}</h2><p>You’re currently using version ${escapeHtml(update.currentVersion)}.</p></div><button class="modal-close" data-action="modal-close">×</button></div>
+    <div class="modal-body">
+      <div class="update-hero"><div class="update-hero-icon">↻</div><div><strong>Ready to update</strong><span>${escapeHtml(update.assetName || 'Installer available')}</span></div></div>
+      <div class="update-notes">${escapeHtml(notes).replaceAll('\n', '<br>')}</div>
+      <div class="security-note">${icons.shield}<span>The installer is downloaded from the public OrbitSend update channel. Your pairing and settings remain on this computer.</span></div>
+    </div>
+    <div class="modal-foot"><button class="button ghost" data-action="modal-close">Later</button><button class="button primary" data-action="update-download">Download update</button></div>
   `);
 }
 
@@ -547,6 +577,26 @@ async function action(button) {
     return;
   }
   if (name === 'clear-history-confirm') { await window.orbit.clearHistory(); closeModal(); return; }
+  if (name === 'update-open') return showUpdateModal();
+  if (name === 'update-check') {
+    button.disabled = true;
+    button.textContent = 'Checking…';
+    const result = await window.orbit.checkForUpdates();
+    ui.state.updates = result;
+    render();
+    if (result.status === 'available') showUpdateModal();
+    else if (result.status === 'current') showToast({ tone: 'success', title: 'OrbitSend is up to date', message: `Version ${result.currentVersion} is the latest version.` });
+    else if (result.error) throw new Error(result.error);
+    return;
+  }
+  if (name === 'update-download') {
+    button.disabled = true;
+    button.textContent = 'Opening download…';
+    await window.orbit.downloadUpdate();
+    closeModal();
+    showToast({ tone: 'success', title: 'Download opened', message: 'Install the new version over OrbitSend when the download finishes.' });
+    return;
+  }
   if (name === 'choose-download') {
     const downloadPath = await window.orbit.pickDownloadFolder();
     if (downloadPath) await window.orbit.updateSettings({ downloadPath });
