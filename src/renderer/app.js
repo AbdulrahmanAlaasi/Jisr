@@ -266,25 +266,25 @@ function renderIncomingNotice(transfer) {
 }
 
 function renderTransferCard(transfer) {
-  const percent = Math.round((transfer.progress || 0) * 100);
+  const percent = window.JisrTransferProgress.percent(transfer);
   const isPendingIncoming = transfer.direction === 'incoming' && transfer.state === 'pending';
-  const detail = transfer.state === 'pending'
-    ? transfer.direction === 'outgoing' ? `Waiting for ${escapeHtml(transfer.peerName)}` : 'Waiting for your approval'
-    : ['sending', 'receiving'].includes(transfer.state)
-      ? `${formatBytes(transfer.currentBytes)} of ${formatBytes(transfer.totalBytes)} · ${percent}%`
-      : `${statusLabel(transfer.state)} · ${escapeHtml(transfer.peerName)}`;
+  const detail = window.JisrTransferProgress.detail(transfer, formatBytes, statusLabel, percent);
   return `
-    <div class="transfer-card" data-transfer-id="${transfer.id}">
+    <div class="transfer-card" data-transfer-id="${escapeHtml(transfer.id)}">
       <div class="transfer-icon">${fileIcon(transfer.kind)}</div>
       <div class="transfer-copy">
-        <div class="transfer-line"><strong>${escapeHtml(transfer.summary)}</strong><span>${detail}</span></div>
-        <div class="progress-track"><div class="progress-bar" style="width:${transfer.state === 'pending' ? 4 : Math.max(3, percent)}%"></div></div>
+        <div class="transfer-line"><strong>${escapeHtml(transfer.summary)}</strong><span data-transfer-detail>${escapeHtml(detail)}</span></div>
+        <div class="progress-track" role="progressbar" aria-label="${escapeHtml(transfer.summary)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><div class="progress-bar" data-transfer-progress style="width:${transfer.state === 'pending' ? 4 : Math.max(3, percent)}%"></div></div>
       </div>
       <div class="transfer-actions">
         ${isPendingIncoming ? `<button class="button small primary" data-action="accept-transfer" data-id="${transfer.id}">Accept</button>` : ''}
         <button class="button small ghost" data-action="cancel-transfer" data-id="${transfer.id}">${isPendingIncoming ? 'Decline' : 'Cancel'}</button>
       </div>
     </div>`;
+}
+
+function patchTransferProgress(transfer) {
+  return window.JisrTransferProgress.patch(mainView, transfer, formatBytes, statusLabel);
 }
 
 function renderHistory() {
@@ -780,6 +780,7 @@ window.addEventListener('drop', async (event) => {
 window.jisr.onState((state) => {
   const updateModalOpen = Boolean(modalRoot.querySelector('[data-modal="update"]'));
   const previousUpdateStatus = ui.state?.updates?.status;
+  const previousViewSignature = window.JisrViewState.signature(ui.state, ui.view);
   ui.state = state;
   if (updateModalOpen && previousUpdateStatus === 'downloading' && state.updates?.status === 'downloading') {
     updateChrome();
@@ -792,7 +793,8 @@ window.jisr.onState((state) => {
     if (button) button.textContent = `Downloading ${updateProgressLabel(state.updates)}`;
     return;
   }
-  render();
+  if (previousViewSignature !== window.JisrViewState.signature(state, ui.view)) render();
+  else updateChrome();
   if (updateModalOpen && ['available', 'downloading', 'downloaded', 'installing'].includes(state.updates?.status)) showUpdateModal();
   showMigrationNotice(state);
 });
@@ -809,8 +811,15 @@ window.jisr.onReceivedMessage((transfer) => {
 window.jisr.onProgress((transfer) => {
   if (!ui.state) return;
   const index = ui.state.transfers.findIndex((item) => item.id === transfer.id);
+  const previous = index >= 0 ? ui.state.transfers[index] : null;
   if (index >= 0) ui.state.transfers[index] = transfer;
-  if (ui.view === 'home') renderHome();
+  else ui.state.transfers.push(transfer);
+  if (ui.view !== 'home') return;
+
+  // Progress arrives for every file chunk. Replacing the whole home view here
+  // caused visible flashing and reset the user's current drag/input state.
+  // Only rebuild when the card's structure changes; otherwise patch its live values.
+  if (!previous || previous.state !== transfer.state || !patchTransferProgress(transfer)) renderHome();
 });
 
 window.setInterval(updatePairExpiry, 1_000);

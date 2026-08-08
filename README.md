@@ -65,9 +65,9 @@ The project is in active early development. The current release is **Jisr
 
 | Computer | Download |
 | --- | --- |
-| Windows x64 or ARM64 | [Jisr Setup 0.4.3.exe](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr.Setup.0.4.3.exe) |
-| Apple Silicon Mac (M1, M2, M3, M4, or newer) | [Jisr 0.4.3 arm64.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr-0.4.3-arm64.dmg) |
-| Intel Mac | [Jisr 0.4.3.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr-0.4.3.dmg) |
+| Windows x64 or ARM64 | [Jisr Setup 0.4.4.exe](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr.Setup.0.4.4.exe) |
+| Apple Silicon Mac (M1, M2, M3, M4, or newer) | [Jisr 0.4.4 arm64.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr-0.4.4-arm64.dmg) |
+| Intel Mac | [Jisr 0.4.4.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr-0.4.4.dmg) |
 
 The macOS ZIP files on the complete
 [releases page](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/latest)
