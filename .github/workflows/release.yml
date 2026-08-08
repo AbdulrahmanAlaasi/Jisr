@@ -79,6 +79,8 @@ jobs:
           cp "$(find release-assets -maxdepth 1 -name 'Jisr.Setup.*.exe' -print -quit)" release-assets/Jisr-Windows-Setup.exe
           cp "$(find release-assets -maxdepth 1 -name 'Jisr-*-arm64.dmg' -print -quit)" release-assets/Jisr-macOS-Apple-Silicon.dmg
           cp "$(find release-assets -maxdepth 1 -name 'Jisr-*.dmg' ! -name '*arm64*' -print -quit)" release-assets/Jisr-macOS-Intel.dmg
+          cd release-assets
+          sha256sum Jisr-Windows-Setup.exe Jisr-macOS-Apple-Silicon.dmg Jisr-macOS-Intel.dmg > SHA256SUMS.txt
 
       - name: Publish release
         uses: softprops/action-gh-release@v2

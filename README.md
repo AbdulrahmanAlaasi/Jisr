@@ -65,9 +65,9 @@ The project is in active early development. The current release is **Jisr
 
 | Computer | Download |
 | --- | --- |
-| Windows x64 or ARM64 | [Jisr Setup 0.4.4.exe](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr.Setup.0.4.4.exe) |
-| Apple Silicon Mac (M1, M2, M3, M4, or newer) | [Jisr 0.4.4 arm64.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr-0.4.4-arm64.dmg) |
-| Intel Mac | [Jisr 0.4.4.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.4/Jisr-0.4.4.dmg) |
+| Windows x64 or ARM64 | [Latest Windows installer](https://github.com/AbdulrahmanAlaasi/Jisr/releases/latest/download/Jisr-Windows-Setup.exe) |
+| Apple Silicon Mac (M1, M2, M3, M4, or newer) | [Latest Apple Silicon DMG](https://github.com/AbdulrahmanAlaasi/Jisr/releases/latest/download/Jisr-macOS-Apple-Silicon.dmg) |
+| Intel Mac | [Latest Intel Mac DMG](https://github.com/AbdulrahmanAlaasi/Jisr/releases/latest/download/Jisr-macOS-Intel.dmg) |
 
 The macOS ZIP files on the complete
 [releases page](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/latest)
@@ -76,6 +76,34 @@ are not required for a normal installation.
 > **Early-access note:** Current builds are unsigned. Windows SmartScreen or
 > macOS Gatekeeper may show a warning until code signing and Apple notarization
 > are configured. See [Known limitations](#known-limitations).
+
+### Verify and open Jisr on macOS
+
+Download only from the links above or the official Jisr release page. On an
+M-series Mac, download `Jisr-macOS-Apple-Silicon.dmg`, then verify it against
+the checksum published with the latest release:
+
+```sh
+cd ~/Downloads
+curl -LO https://github.com/AbdulrahmanAlaasi/Jisr/releases/latest/download/SHA256SUMS.txt
+grep 'Jisr-macOS-Apple-Silicon.dmg' SHA256SUMS.txt | shasum -a 256 -c -
+```
+
+The result must say `OK`. Open the DMG, drag Jisr into Applications, and try to
+open it once. If macOS blocks it, open **System Settings → Privacy & Security**
+and choose **Open Anyway**.
+
+If macOS instead reports that Jisr is damaged and does not offer **Open
+Anyway**, remove the quarantine attribute from the copy in Applications:
+
+```sh
+sudo xattr -rd com.apple.quarantine "/Applications/Jisr.app"
+open "/Applications/Jisr.app"
+```
+
+Removing quarantine is an explicit Gatekeeper override; it is not a substitute
+for the checksum verification above. Do this only for Jisr downloaded from the
+official repository.
 
 ## Quick start
 
