@@ -4,6 +4,11 @@ All notable changes to Jisr are documented here.
 
 ## [Unreleased]
 
+## [0.4.3]
+
+- Applied the approved Jisr bridge artwork to the in-app brand mark, Windows
+  application icon, installer, uninstaller, shortcuts, and macOS bundle.
+- Improved transfer-service shutdown reliability.
 - Prepared public contribution, security, privacy, and support documentation.
 
 ## [0.4.2]
@@ -33,7 +38,8 @@ All notable changes to Jisr are documented here.
 
 - Added the initial Windows and macOS desktop-sharing application.
 
-[Unreleased]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/AbdulrahmanAlaasi/Jisr/compare/v0.3.1...v0.4.0
