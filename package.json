@@ -1,7 +1,7 @@
 {
   "name": "jisr",
-  "version": "0.4.2",
-  "description": "Private, encrypted file and clipboard sharing between Windows and Mac.",
+  "version": "0.4.3",
+  "description": "Private, encrypted sharing between Windows and macOS computers.",
   "homepage": "https://jisr.alaasi.dev",
   "repository": {
     "type": "git",
@@ -76,7 +76,7 @@
       }
     },
     "win": {
-      "icon": "build/icon.png",
+      "icon": "build/icon.ico",
       "target": [
         { "target": "nsis", "arch": ["x64", "arm64"] },
         { "target": "portable", "arch": ["x64"] }
@@ -86,7 +86,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     }
   }
 }

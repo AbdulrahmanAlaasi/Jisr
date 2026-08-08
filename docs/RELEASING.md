@@ -1,7 +1,8 @@
 # Releasing Jisr
 
-Jisr uses a private GitHub repository and GitHub Actions to build Windows
-and macOS packages on their correct operating systems.
+Jisr uses GitHub Actions to build Windows and macOS packages on their correct
+operating systems. The same process works before and after the source
+repository is made public.
 
 ## Normal update workflow
 
@@ -32,8 +33,8 @@ git tag v0.4.1
 git push origin v0.4.1
 ```
 
-After the private build succeeds, download its assets and create the matching
-public release:
+After the build succeeds, download its assets and create the matching release
+in the public update repository:
 
 ```sh
 gh release download v0.4.1 --repo AbdulrahmanAlaasi/Jisr --dir update-assets

@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem with Jisr
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Jisr. Do not include private files, pairing codes, private keys, or sensitive network details.
+  - type: input
+    id: version
+    attributes:
+      label: Jisr version
+      placeholder: 0.4.2
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows and macOS
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Jisr
+        2. Choose...
+        3. See...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add safe screenshots or logs with sensitive information removed.

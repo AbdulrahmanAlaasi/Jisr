@@ -50,10 +50,12 @@ test('path sanitization blocks traversal and reserved characters', () => {
   assert.equal(cleanRelativePath('/../'), 'untitled');
 });
 
-test('two devices pair, exchange text, and transfer a verified file', async (t) => {
+test('two same-OS devices pair, exchange text, and transfer a verified file', async (t) => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'jisr-test-'));
   const alice = await createDevice(root, 'Windows PC');
   const bob = await createDevice(root, 'MacBook Pro');
+  assert.equal(alice.service.publicIdentity().platform, process.platform);
+  assert.equal(bob.service.publicIdentity().platform, process.platform);
   t.after(async () => {
     await Promise.all([alice.service.stop(), bob.service.stop()]);
     await fs.rm(root, { recursive: true, force: true });
