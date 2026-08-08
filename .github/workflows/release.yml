@@ -73,6 +73,13 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Create permanent latest-download names
+        shell: bash
+        run: |
+          cp "$(find release-assets -maxdepth 1 -name 'Jisr.Setup.*.exe' -print -quit)" release-assets/Jisr-Windows-Setup.exe
+          cp "$(find release-assets -maxdepth 1 -name 'Jisr-*-arm64.dmg' -print -quit)" release-assets/Jisr-macOS-Apple-Silicon.dmg
+          cp "$(find release-assets -maxdepth 1 -name 'Jisr-*.dmg' ! -name '*arm64*' -print -quit)" release-assets/Jisr-macOS-Intel.dmg
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
