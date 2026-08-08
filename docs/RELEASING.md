@@ -17,6 +17,12 @@ repository is made public.
    repository so
    installed applications can detect the new version.
 
+The release workflow also publishes stable aliases for the website:
+`Jisr-Windows-Setup.exe`, `Jisr-macOS-Apple-Silicon.dmg`, and
+`Jisr-macOS-Intel.dmg`. The landing page uses GitHub's `latest/download`
+redirects with these names, so its download buttons always resolve to the
+newest release without a website edit.
+
 Jisr uses a new application identity and storage location. The first Jisr 0.4.0
 installation is intentionally separate from OrbitSend 0.3.x, so devices must be
 paired once under the new name. Later Jisr updates preserve Jisr settings and
