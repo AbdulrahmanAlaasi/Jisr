@@ -133,9 +133,14 @@ class TransferService extends EventEmitter {
   }
 
   async stop() {
-    if (!this.server) return;
-    await new Promise((resolve) => this.server.close(resolve));
+    const server = this.server;
+    if (!server) return;
     this.server = null;
+    await new Promise((resolve) => {
+      server.close(resolve);
+      server.closeIdleConnections?.();
+      server.closeAllConnections?.();
+    });
   }
 
   publicIdentity() {

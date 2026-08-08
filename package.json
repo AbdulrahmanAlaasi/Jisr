@@ -1,7 +1,7 @@
 {
   "name": "jisr",
   "version": "0.4.2",
-  "description": "Private, encrypted file and clipboard sharing between Windows and Mac.",
+  "description": "Private, encrypted sharing between Windows and macOS computers.",
   "homepage": "https://jisr.alaasi.dev",
   "repository": {
     "type": "git",
