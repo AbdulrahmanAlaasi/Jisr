@@ -19,9 +19,10 @@
 </p>
 
 <p align="center">
-  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-6c5ce7">
+  <a href="https://github.com/AbdulrahmanAlaasi/Jisr/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/AbdulrahmanAlaasi/Jisr/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/AbdulrahmanAlaasi/OrbitSend-Updates?label=release&color=6c5ce7"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-6c5ce7"></a>
   <img alt="Windows and macOS" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-171426">
-  <img alt="No account required" src="https://img.shields.io/badge/account-not%20required-2dbe8b">
 </p>
 
 ## What is Jisr?
@@ -43,6 +44,9 @@ Jisr works with **any pair of supported computers**:
 Jisr currently supports desktop Windows and macOS. iPhone, iPad, Android, and
 Linux are not supported yet.
 
+The project is in active early development. The current release is **Jisr
+0.4.3**.
+
 ## Features
 
 - Automatic device discovery on the same Wi-Fi or wired local network
@@ -59,17 +63,19 @@ Linux are not supported yet.
 
 ## Install
 
-Download the newest installers from the
-[Jisr releases page](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/latest).
+| Computer | Download |
+| --- | --- |
+| Windows x64 or ARM64 | [Jisr Setup 0.4.3.exe](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr.Setup.0.4.3.exe) |
+| Apple Silicon Mac (M1, M2, M3, M4, or newer) | [Jisr 0.4.3 arm64.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr-0.4.3-arm64.dmg) |
+| Intel Mac | [Jisr 0.4.3.dmg](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/download/v0.4.3/Jisr-0.4.3.dmg) |
 
-- **Windows:** use `Jisr.Setup.<version>.exe`.
-- **Apple Silicon Mac (M1, M2, M3, M4, or newer):** use `Jisr-<version>-arm64.dmg`.
-- **Intel Mac:** use `Jisr-<version>.dmg` or the asset marked x64.
-- The macOS ZIP is not required for a normal installation.
+The macOS ZIP files on the complete
+[releases page](https://github.com/AbdulrahmanAlaasi/OrbitSend-Updates/releases/latest)
+are not required for a normal installation.
 
-Current builds are unsigned. Windows SmartScreen or macOS Gatekeeper can show
-a warning until code signing and Apple notarization are configured. See
-[Known limitations](#known-limitations) before distributing Jisr widely.
+> **Early-access note:** Current builds are unsigned. Windows SmartScreen or
+> macOS Gatekeeper may show a warning until code signing and Apple notarization
+> are configured. See [Known limitations](#known-limitations).
 
 ## Quick start
 
